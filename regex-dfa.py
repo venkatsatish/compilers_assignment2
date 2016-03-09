@@ -137,19 +137,6 @@ class NFAfromRegex:
         self.alphabet.pop()
 
 
-def main():
-    inp = "(a+b)*abb"
-    print "Regular Expression: ", inp
-    nfa = NFAfromRegex(inp)
-    print "\n Minimized DFA"
-    DFAtable, DFAstates, DFAstartstate, DFAfinalstates, DFAterminals = DFAfromNFA(nfa.states, nfa.transition, nfa.start_state, nfa.final_states, nfa.alphabet)
-
-    for i in DFAtable:
-        print str(i) + '->' + str(DFAtable[i])
-    # print "finalstates= " + str(DFAfinalstates)
-    DFAminimize(DFAtable,DFAstates,DFAterminals,DFAstartstate,DFAfinalstates)
-
-
 def epsilonclosure(states,transitions):
     U = set()
     M = set()
@@ -166,6 +153,7 @@ def epsilonclosure(states,transitions):
                     U.add(j)
     # print "epsilonclosure(" + str(states) + ')=' + str(U)
     return U
+
 
 def DFAfromNFA(states,transitions,startstate,finalstates,terminals):
     unmarkedstates = []
@@ -219,20 +207,63 @@ def DFAfromNFA(states,transitions,startstate,finalstates,terminals):
             S = set()
     return DFAtable,markedstates,DFAstartstate,DFAfinalstates,terminals
 
-def DFAminimize(transitions,states,terminals,startstate,finalstates):
-    F = set()
-    S = set()
-    F = finalstates
-    S = set()
-    # S = set([F],[states-finalstates])
-    # while
-    return 0
 
+def DFAminimize(transitions,states,terminals,startstate,finalstates):
+    """Hopcroft algorithm"""
+    F = finalstates
+    P = [F, states - finalstates]
+    P1 = P
+    W = [F]
+
+    while len(W) != 0:
+        A = W[0]
+        W.remove(A)
+        for t in terminals:
+            X = set([s for s, v in transitions.iteritems() if t in [v.get(u) for u in A if v.get(u)]])
+
+            for Y in P:
+                if (X & Y) and (Y - X):
+                    P1.remove(Y)
+                    P1.append(X & Y)
+                    P1.append(Y - X)
+                    if Y.issubset(W):
+                        W.remove(Y)
+                        W.append(X & Y)
+                        W.append(Y - X)
+                    else:
+                        if len(X & Y) <= len(Y - X):
+                            W.append(X & Y)
+                        else:
+                            W.append(Y - X)
+            P = P1
+
+    min_states = set(range(len(P)))
+    min_startstate = [l for l, m in enumerate(P) if startstate in m][0]
+    min_finalstates = [i for i, Y in enumerate(P) if Y & F]
+    min_transitions = {}
+
+    for min_state in min_states:
+        min_transitions[min_state] = {}
+    for i, Y in enumerate(P):
+        for j, k in transitions[list(Y)[0]].iteritems():
+            min_transitions[i][[l for l, m in enumerate(P) if j in m][0]] = k
+    return min_transitions, min_states, min_startstate, min_finalstates, terminals
+
+
+def main():
+    inp = "(a+b)*abb"
+    print "\nRegular Expression: ", inp
+    nfa = NFAfromRegex(inp)
+    print "\nDFA"
+    DFAtable, DFAstates, DFAstartstate, DFAfinalstates, DFAterminals = DFAfromNFA(nfa.states, nfa.transition, nfa.start_state, nfa.final_states, nfa.alphabet)
+
+    for i in DFAtable:
+        print str(i) + '->' + str(DFAtable[i])
+    # print "finalstates= " + str(DFAfinalstates)
+    min_transitions, min_states, min_startstate, min_finalstates, min_terminals = DFAminimize(DFAtable,DFAstates,DFAterminals,DFAstartstate,DFAfinalstates)
+    print "\n Minimized DFA"
+    for i in min_transitions:
+        print str(i) + '->' + str(min_transitions[i])
 
 if __name__  ==  '__main__':
-    t = time.time()
-    try:
-        main()
-    except BaseException as e:
-        print "\nFailure:", e
-    print "\nExecution time: ", time.time() - t, "seconds"        
+    main()
