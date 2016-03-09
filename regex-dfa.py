@@ -245,9 +245,15 @@ def DFAminimize(transitions,states,terminals,startstate,finalstates):
 
     for min_state in min_states:
         min_transitions[min_state] = {}
-    for i, Y in enumerate(P):
-        for j, k in transitions[list(Y)[0]].iteritems():
-            min_transitions[i][[l for l, m in enumerate(P) if j in m][0]] = k
+    for start_group, group_states in enumerate(P):
+        start_state = list(group_states)[0]
+        for end_state, terminal in transitions[start_state].iteritems():
+
+            end_group = [l for l, m in enumerate(P) if start_state in m][0]
+            if end_group not in min_transitions[start_group]:
+                min_transitions[start_group][end_group] = []
+            min_transitions[start_group][end_group].append(terminal)
+
     return min_transitions, min_states, min_startstate, min_finalstates, terminals
 
 
