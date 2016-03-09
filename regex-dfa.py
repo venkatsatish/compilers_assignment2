@@ -185,25 +185,26 @@ def DFAfromNFA(states,transitions,startstate,finalstates,terminals):
             # print "move(" + str(T) + "," + t + ")=" + str(S)
             U=epsilonclosure(S,transitions)
             k=0
-            for i in DFAstates:
-                if U == DFAstates[i]:
+            if len(U)!= 0:
+                for i in DFAstates:
+                    if U == DFAstates[i]:
+                        if T in DFAtable:
+                            DFAtable[T][i] = t
+                        else:
+                            DFAtable[T] = {i : t}
+                        k = 1
+                        break
+                if k == 0:
+                    DFAstates[q] = U
+                    unmarkedstates.append(q)
                     if T in DFAtable:
-                        DFAtable[T][i] = t
+                        DFAtable[T][q] = t
                     else:
-                        DFAtable[T] = {i : t}
-                    k = 1
-                    break
-            if k == 0:
-                DFAstates[q] = U
-                unmarkedstates.append(q)
-                if T in DFAtable:
-                    DFAtable[T][q] = t
-                else:
-                    DFAtable[T] = {q:t}
-                for i in U:
-                    if i in finalstates:
-                        DFAfinalstates.add(q)
-                q += 1
+                        DFAtable[T] = {q:t}
+                    for i in U:
+                        if i in finalstates:
+                            DFAfinalstates.add(q)
+                    q += 1
             S = set()
     return DFAtable,markedstates,DFAstartstate,DFAfinalstates,terminals
 
@@ -251,7 +252,7 @@ def DFAminimize(transitions,states,terminals,startstate,finalstates):
 
 
 def main():
-    inp = "(a+b)*abb"
+    inp = "a(b+c)*"
     print "\nRegular Expression: ", inp
     nfa = NFAfromRegex(inp)
     print "\nDFA"
