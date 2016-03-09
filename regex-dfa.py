@@ -3,7 +3,9 @@ current = 0
 
 # E -> T + E | T
 # T -> F.T | F
-# F -> (E) | F* | id
+# F -> F'* | F'
+# F'-> (E) | id
+
 
 
 def match(string):
