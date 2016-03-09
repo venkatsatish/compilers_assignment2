@@ -249,7 +249,7 @@ def DFAminimize(transitions,states,terminals,startstate,finalstates):
         start_state = list(group_states)[0]
         for end_state, terminal in transitions[start_state].iteritems():
 
-            end_group = [l for l, m in enumerate(P) if start_state in m][0]
+            end_group = [l for l, m in enumerate(P) if end_state in m][0]
             if end_group not in min_transitions[start_group]:
                 min_transitions[start_group][end_group] = []
             min_transitions[start_group][end_group].append(terminal)
@@ -257,20 +257,44 @@ def DFAminimize(transitions,states,terminals,startstate,finalstates):
     return min_transitions, min_states, min_startstate, min_finalstates, terminals
 
 
+def simulate_dfa(transitions, startstate, finalstates, input_string):
+    current = startstate
+    for char in input_string:
+        try:
+            current = [end_state for end_state, terminals in transitions[current].iteritems() if char in terminals][0]
+        except IndexError:
+            return False
+    return current in finalstates
+
+
 def main():
-    inp = "a(b+c)*"
+    inp = "(a+b)*abb"
+
     print "\nRegular Expression: ", inp
     nfa = NFAfromRegex(inp)
-    print "\nDFA"
-    DFAtable, DFAstates, DFAstartstate, DFAfinalstates, DFAterminals = DFAfromNFA(nfa.states, nfa.transition, nfa.start_state, nfa.final_states, nfa.alphabet)
 
-    for i in DFAtable:
-        print str(i) + '->' + str(DFAtable[i])
-    # print "finalstates= " + str(DFAfinalstates)
+    # print "\n DFA"
+    DFAtable, DFAstates, DFAstartstate, DFAfinalstates, DFAterminals = DFAfromNFA(nfa.states, nfa.transition, nfa.start_state, nfa.final_states, nfa.alphabet)
+    # for i in DFAtable:
+        # print str(i) + '->' + str(DFAtable[i])
+
+    print "\nMinimized DFA\n-------------"
     min_transitions, min_states, min_startstate, min_finalstates, min_terminals = DFAminimize(DFAtable,DFAstates,DFAterminals,DFAstartstate,DFAfinalstates)
-    print "\n Minimized DFA"
+    print('start state  : ' + str(min_startstate))
+    print('final states : ' + str(min_finalstates) + '\n')
     for i in min_transitions:
         print str(i) + '->' + str(min_transitions[i])
+
+    # Simulate minimized DFA on test strings
+    while True:
+        print('\nEnter test string:'),
+        test_string = raw_input()
+        test_passed = simulate_dfa(min_transitions, min_startstate, min_finalstates, test_string)
+        if test_passed:
+            print(test_string + ': Passed')
+        else:
+            print(test_string + ': Failed')
+
 
 if __name__  ==  '__main__':
     main()
